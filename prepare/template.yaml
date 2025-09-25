@@ -35,6 +35,9 @@ Parameters:
     Type: String
     NoEcho: true
     Default: ""
+  TransformS3Prefix:
+    Description: S3 URI prefix containing county transform archives
+    Type: String
   ElephantKeystoreS3Key:
     Description: S3 key for keystore JSON file (when using keystore mode)
     Type: String
@@ -79,7 +82,16 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
-  
+
+  ElephantPrepareBrowserFlowTemplate:
+    Description: Browser flow template for prepare function (must be provided with ElephantPrepareBrowserFlowParameters)
+    Type: String
+    Default: ""
+  ElephantPrepareBrowserFlowParameters:
+    Description: Browser flow parameters JSON for prepare function (must be provided with ElephantPrepareBrowserFlowTemplate)
+    Type: String
+    Default: ""
+
   UpdaterScheduleRate:
     Description: How often the updater function runs (e.g., '1 minute', '5 minutes', or 'cron(*/1 * * * ? *)' for every minute)
     Type: String
@@ -87,7 +99,8 @@ Parameters:
     AllowedPattern: "^([0-9]+ (minute|minutes|hour|hours|day|days)|cron\\(.+\\))$"
 
 Conditions:
-  IsRateExpression: !Not [!Equals [!Select [0, !Split ["(", !Ref UpdaterScheduleRate]], "cron"]]
+  IsRateExpression:
+    !Not [!Equals [!Select [0, !Split ["(", !Ref UpdaterScheduleRate]], "cron"]]
 
 Globals:
   Function:
@@ -196,6 +209,8 @@ Resources:
           ELEPHANT_PREPARE_USE_BROWSER: !Ref ElephantPrepareUseBrowser
           ELEPHANT_PREPARE_NO_FAST: !Ref ElephantPrepareNoFast
           ELEPHANT_PREPARE_NO_CONTINUE: !Ref ElephantPrepareNoContinue
+          ELEPHANT_PREPARE_BROWSER_FLOW_TEMPLATE: !Ref ElephantPrepareBrowserFlowTemplate
+          ELEPHANT_PREPARE_BROWSER_FLOW_PARAMETERS: !Ref ElephantPrepareBrowserFlowParameters
       Policies:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
@@ -227,7 +242,7 @@ Resources:
           Properties:
             Name: UpdateDownloaderSchedule
             Description: !Sub "Invoke updater every ${UpdaterScheduleRate} to refresh env var."
-            Schedule: !If 
+            Schedule: !If
               - IsRateExpression
               - !Sub "rate(${UpdaterScheduleRate})"
               - !Ref UpdaterScheduleRate
@@ -416,6 +431,7 @@ Resources:
           ELEPHANT_FROM_ADDRESS: !Ref ElephantFromAddress
           ELEPHANT_RPC_URL: !Ref ElephantRpcUrl
           ELEPHANT_PINATA_JWT: !Ref ElephantPinataJwt
+          TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
 
   #####################################################################################################################
   # Express Step Functions State Machine (separate definition file)
@@ -889,6 +905,9 @@ Outputs:
   ElephantExpressStateMachineName:
     Description: Name of the Elephant Express state machine
     Value: !GetAtt ElephantExpressStateMachine.Name
+  WorkflowPostProcessorLogGroupName:
+    Description: CloudWatch Log Group name for the post processor Lambda function
+    Value: !Sub "/aws/lambda/${WorkflowPostProcessorFunction}"
   WorkflowDeadLetterQueueUrl:
     Description: URL of the Workflow Dead Letter Queue
     Value: !Ref WorkflowDeadLetterQueue
