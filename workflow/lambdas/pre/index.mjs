@@ -38,6 +38,24 @@ async function csvToJson(csvPath) {
 }
 
 /**
+ * Convert CSV file string to JSON array
+ * @param {string} csvContent - CSV String
+ * @returns {Promise<Object[]>} - Array of objects representing CSV rows
+ */
+async function csvStringToJson(csvContent) {
+  try {
+    const records = parse(csvContent, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    });
+    return records;
+  } catch (error) {
+    return [];
+  }
+}
+
+/**
  * Build paths and derive prepare input from SQS/S3 event message.
  * - Extracts bucket/key from S3 event in SQS body
  * - Produces output prefix and input path for prepare Lambda
@@ -70,9 +88,38 @@ export const handler = async (event) => {
     const get = await s3.send(
       new GetObjectCommand({ Bucket: bucket, Key: key }),
     );
-    const csvBytes = await get.Body?.transformToByteArray();
-    if (!csvBytes) throw new Error("Failed to download input CSV");
-    await fs.writeFile(csvPath, Buffer.from(csvBytes));
+    // SANTA ROSA specific code
+    const csvContent = await get.Body?.transformToString();
+    if (!csvContent) throw new Error("Failed to download input CSV");
+    // await fs.writeFile(csvPath, Buffer.from(csvBytes));
+    let seedCsvRecords = await csvStringToJson(csvContent);
+    let hasMineralParcel = false;
+    for (const row of seedCsvRecords) {
+      if (row.parcel_id && row.parcel_id.trim().endsWith('M')) {
+        hasMineralParcel = true;
+        break;
+      }
+    }
+    let modifiedCsvContent;
+    if (hasMineralParcel) {
+      // modifiedCsvContent = csvContent.replace(
+      //   /https:\/\/parcelview\.srcpa\.gov\//g, 
+      //   'https://parcelview.srcpa.gov/mineral'
+      // );
+      // console.log("Found parcel_id with 'M' - replaced mineral URL");
+      throw new Error("Mineral is not residential");
+    } else {
+      modifiedCsvContent = csvContent.replace(
+        /https:\/\/parcelview\.srcpa\.gov\//g, 
+        'https://parcelview.srcpa.gov'
+      );
+      console.log("No parcel_id with 'M' found - removed end /");
+    }
+    
+    // Write the file back
+    await fs.writeFile(csvPath, modifiedCsvContent, 'utf8');
+    // SANTA ROSA specific code ENDS
+
     const seedInputZip = path.join(tmp, "input.zip");
     const inZip = new AdmZip();
     inZip.addLocalFile(csvPath, "", "seed.csv");
