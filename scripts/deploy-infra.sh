@@ -45,7 +45,7 @@ get_bucket() {
   aws cloudformation describe-stacks \
     --stack-name "$STACK_NAME" \
     --query 'Stacks[0].Outputs[?OutputKey==`EnvironmentBucketName`].OutputValue' \
-    --output text
+    --output text 2>/dev/null || echo ""
 }
 
 get_output() {
@@ -53,7 +53,7 @@ get_output() {
   aws cloudformation describe-stacks \
     --stack-name "$STACK_NAME" \
     --query "Stacks[0].Outputs[?OutputKey=='${key}'].OutputValue" \
-    --output text
+    --output text 2>/dev/null || echo ""
 }
 
 sam_build() {
@@ -172,6 +172,9 @@ compute_param_overrides() {
   [[ -n "${ELEPHANT_PREPARE_USE_BROWSER:-}" ]] && parts+=("ElephantPrepareUseBrowser=\"$ELEPHANT_PREPARE_USE_BROWSER\"")
   [[ -n "${ELEPHANT_PREPARE_NO_FAST:-}" ]] && parts+=("ElephantPrepareNoFast=\"$ELEPHANT_PREPARE_NO_FAST\"")
   [[ -n "${ELEPHANT_PREPARE_NO_CONTINUE:-}" ]] && parts+=("ElephantPrepareNoContinue=\"$ELEPHANT_PREPARE_NO_CONTINUE\"")
+
+  # Continue button selector
+  [[ -n "${ELEPHANT_PREPARE_CONTINUE_BUTTON:-}" ]] && parts+=("ElephantPrepareContinueButton=\"$ELEPHANT_PREPARE_CONTINUE_BUTTON\"")
 
   # Browser flow template and parameters (use converted simple format)
   [[ -n "${ELEPHANT_PREPARE_BROWSER_FLOW_TEMPLATE:-}" ]] && parts+=("ElephantPrepareBrowserFlowTemplate=\"$ELEPHANT_PREPARE_BROWSER_FLOW_TEMPLATE\"")
@@ -335,7 +338,7 @@ handle_pending_keystore_upload() {
 apply_county_configs() {
   # Check if there are any county-specific environment variables
   local has_county_vars=false
-  for var in $(env | grep -E "^ELEPHANT_PREPARE_(USE_BROWSER|NO_FAST|NO_CONTINUE|BROWSER_FLOW_TEMPLATE|BROWSER_FLOW_PARAMETERS)_[A-Za-z]+" | cut -d= -f1 || true); do
+  for var in $(env | grep -E "^ELEPHANT_PREPARE_(USE_BROWSER|NO_FAST|NO_CONTINUE|CONTINUE_BUTTON|BROWSER_FLOW_TEMPLATE|BROWSER_FLOW_PARAMETERS)_[A-Za-z]+" | cut -d= -f1 || true); do
     if [[ -n "$var" ]]; then
       has_county_vars=true
       break
@@ -363,6 +366,12 @@ main() {
     add_transform_prefix_override
   else
     info "Delaying transform upload until stack bucket exists."
+    # Add placeholder value for initial deployment
+    if [[ -z "${PARAM_OVERRIDES:-}" ]]; then
+      PARAM_OVERRIDES="TransformS3Prefix=\"pending\""
+    else
+      PARAM_OVERRIDES+=" TransformS3Prefix=\"pending\""
+    fi
   fi
 
   sam_build
@@ -370,6 +379,8 @@ main() {
 
   if (( TRANSFORMS_UPLOAD_PENDING == 1 )); then
     upload_transforms_to_s3
+    # Recompute all parameters with the actual transform prefix
+    compute_param_overrides
     add_transform_prefix_override
     sam_deploy
   fi
@@ -382,7 +393,11 @@ main() {
   bucket=$(get_bucket)
   echo
   info "Done!"
-  info "Environment bucket: $bucket"
+  if [[ -n "$bucket" ]]; then
+    info "Environment bucket: $bucket"
+  else
+    info "Stack deployed successfully"
+  fi
 }
 
 main "$@"
