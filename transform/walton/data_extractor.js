@@ -14,12 +14,11 @@ function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-const PARCEL_SELECTOR = "#ctlBodyPane_ctl08_ctl01_lblParcelID";
-const OVERALL_DETAILS_TABLE_SELECTOR = "#ctlBodyPane_ctl08_mSection > div > div > table.tabular-data-two-column tbody tr";
+const PARCEL_SELECTOR = "#ctlBodyPane_ctl04_ctl01_dynamicSummary_rptrDynamicColumns_ctl00_pnlSingleValue";
+const OVERALL_DETAILS_TABLE_SELECTOR = "#ctlBodyPane_ctl04_ctl01_dynamicSummary_divSummary table tbody tr";
 const BUILDING_SECTION_TITLE = "Building Information";
-const SALES_TABLE_SELECTOR = "#ctlBodyPane_ctl18_ctl01_grdSales tbody tr";
-const VALUATION_TABLE_SELECTOR = "#ctlBodyPane_ctl12_ctl01_grdValuation_grdYearData";
-const HISTORICAL_VALUATION_TABLE_SELECTOR = "#ctlBodyPane_ctl13_ctl01_grdLand_grdFlat";
+const SALES_TABLE_SELECTOR = "#ctlBodyPane_ctl12_ctl01_grdSales tbody tr";
+const VALUATION_TABLE_SELECTOR = "#ctlBodyPane_ctl06_ctl01_grdValuation";
 
 function readJSON(p) {
   try {
@@ -84,7 +83,7 @@ function extractLegalDescription($) {
   $(
     OVERALL_DETAILS_TABLE_SELECTOR,
   ).each((i, tr) => {
-    let th = textOf($(tr).find("th"));
+    const th = textOf($(tr).find("th strong"));
     if(!th || !th.trim()) {
       th = textOf($(tr).find("td").first());
     }
@@ -100,7 +99,7 @@ function extractUseCode($) {
   $(
     OVERALL_DETAILS_TABLE_SELECTOR,
   ).each((i, tr) => {
-    let th = textOf($(tr).find("th"));
+    const th = textOf($(tr).find("th strong"));
     if(!th || !th.trim()) {
       th = textOf($(tr).find("td").first());
     }
@@ -201,14 +200,14 @@ function toInt(val) {
 function extractBuildingYears($) {
   const buildings = collectBuildings($);
   const yearsActual = [];
-  // const yearsEffective = [];
+  const yearsEffective = [];
    buildings.forEach((b) => {
-    yearsActual.push(toInt(b["Year Built"]));
-    // yearsEffective.push(toInt(b["Effective Year Built"]));
+    yearsActual.push(toInt(b["Actual Year Built"]));
+    yearsEffective.push(toInt(b["Effective Year Built"]));
   });
   return {
     actual: yearsActual.length ? Math.min(...yearsActual) : null,
-    // effective: yearsEffective.length ? Math.min(...yearsEffective) : null,
+    effective: yearsEffective.length ? Math.min(...yearsEffective) : null,
   };
 }
 
@@ -216,7 +215,7 @@ function extractAreas($) {
   let total = 0;
   const buildings = collectBuildings($);
    buildings.forEach((b) => {
-    total += toInt(b["Actual Area"]);
+    total += toInt(b["Total Area"]);
   });
   return total;
 }
@@ -229,10 +228,10 @@ function extractSales($) {
     const saleDate = textOf($(tds[1]));
     const salePrice = textOf($(tds[2]));
     const instrument = textOf($(tds[3]));
-    const bookPage = `${textOf($(tds[4]))}/${textOf($(tds[5]))}`;
-    const link = $(tds[5]).find("a").last().attr("href") || null;
-    const grantor = textOf($(tds[9]));
-    const grantee = textOf($(tds[10]));
+    const bookPage = textOf($(tds[4]));
+    const link = $(tds[4]).find("a").last().attr("href") || null;
+    const grantor = textOf($(tds[8]));
+    const grantee = textOf($(tds[9]));
     out.push({
       saleDate,
       salePrice,
@@ -250,13 +249,9 @@ function mapInstrumentToDeedType(instr) {
   if (!instr) return null;
   const u = instr.trim().toUpperCase();
   if (u === "WD") return "Warranty Deed";
-  if (u === "WARRANTY DEED") return "Warranty Deed";
   if (u == "TD") return "Tax Deed";
-  if (u == "TAX DEED") return "Tax Deed";
   if (u == "QC") return "Quitclaim Deed";
-  if (u == "QUITCLAIM DEED") return "Quitclaim Deed";
   if (u == "SW") return "Special Warranty Deed";
-  if (u == "SPECIAL WARRANTY DEED") return "Special Warranty Deed";
   return null;
   // throw {
   //   type: "error",
@@ -295,13 +290,13 @@ function extractValuation($) {
   return years.map(({ year, idx }) => {
     const get = (label) => {
       const arr = dataMap[label] || [];
-      return arr[idx - 1] || null;
+      return arr[idx] || null;
     };
     return {
       year,
       building: get("Building Value"),
-      land: get("Total Land Value"),
-      market: get("Just Market"),
+      land: get("Land Value"),
+      market: get("Just (Market) Value"),
       assessed: get("Assessed Value"),
       taxable: get("Taxable Value"),
     };
@@ -326,7 +321,7 @@ function writeProperty($, parcelId) {
     parcel_identifier: parcelId || "",
     property_legal_description_text: legal || null,
     property_structure_built_year: years.actual || null,
-    property_effective_built_year: null,
+    property_effective_built_year: years.effective || null,
     property_type: propertyType,
     livable_floor_area: null,
     total_area: totalArea >= 10 ? String(totalArea) : null,
@@ -520,61 +515,6 @@ function writePersonCompaniesSalesRelationships(parcelId, sales) {
   });
 }
 
-function extractHistoricalValuation($) {
-  const table = $(HISTORICAL_VALUATION_TABLE_SELECTOR);
-  if (table.length === 0) return [];
-  // const years = [];
-  // const headerThs = table.find("tbody tr th").toArray();
-  // headerThs.forEach((th, idx) => {
-  //   const txt = $(th).text().trim();
-  //   const m = txt.match(/(\d{4})/);
-  //   if (m && m.length > 1) {
-  //     let y = parseInt(m[1], 10);
-  //     if (!isNaN(y)) {
-  //       years.push({ year: y, idx });
-  //     }
-  //   }
-  // });
-  const rows = table.find("tbody tr");
-  const dataMap = {};
-  rows.each((i, tr) => {
-    const $tr = $(tr);
-    const label = textOf($tr.find("th"));
-    const tds = $tr.find("td");
-    const vals = [];
-    tds.each((j, td) => {
-      vals.push($(td).text().trim());
-    });
-    if (label) dataMap[label] = vals;
-  });
-  let mapped_values = [];
-  for (const [key, values] of Object.entries(dataMap)) {
-    mapped_values.push({
-        year: parseInt(key, 10),
-        building: values[0],
-        land: values[2],
-        market: values[5],
-        assessed: values[6],
-        taxable: values[8],
-    });
-  }
-  return mapped_values;
-  // return years.map(({ year, idx }) => {
-  //   const get = (label) => {
-  //     const arr = dataMap[label] || [];
-  //     return arr[idx] || null;
-  //   };
-  //   return {
-  //     year,
-  //     building: get("Building Value"),
-  //     land: get("Total Land Value"),
-  //     market: get("Just Market"),
-  //     assessed: get("Assessed Value"),
-  //     taxable: get("Taxable Value"),
-  //   };
-  // });
-}
-
 function writeTaxes($) {
   const vals = extractValuation($);
   vals.forEach((v) => {
@@ -591,23 +531,6 @@ function writeTaxes($) {
     };
     writeJSON(path.join("data", `tax_${v.year}.json`), taxObj);
   });
-  if (HISTORICAL_VALUATION_TABLE_SELECTOR) {
-    const historicalVals = extractHistoricalValuation($);
-    historicalVals.forEach((v) => {
-    const taxObj = {
-        tax_year: v.year || null,
-        property_assessed_value_amount: parseCurrencyToNumber(v.assessed),
-        property_market_value_amount: parseCurrencyToNumber(v.market),
-        property_building_amount: parseCurrencyToNumber(v.building),
-        property_land_amount: parseCurrencyToNumber(v.land),
-        property_taxable_value_amount: parseCurrencyToNumber(v.taxable),
-        monthly_tax_amount: null,
-        period_end_date: null,
-        period_start_date: null,
-      };
-      writeJSON(path.join("data", `tax_${v.year}.json`), taxObj);
-    });
-  }
 }
 
 function writeUtility(parcelId) {
@@ -718,7 +641,7 @@ function extractSecTwpRng($) {
   $(
     OVERALL_DETAILS_TABLE_SELECTOR,
   ).each((i, tr) => {
-    let th = textOf($(tr).find("th"));
+    const th = textOf($(tr).find("th strong"));
     if(!th || !th.trim()) {
       th = textOf($(tr).find("td").first());
     }

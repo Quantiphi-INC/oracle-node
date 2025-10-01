@@ -1,5 +1,5 @@
-// Utility mapping script
-// Reads input.html, parses building hints for HVAC, and writes owners/utilities_data.json
+// Layout mapping script
+// Reads input.html, parses buildings bedroom/bath counts and generates layout entries per room type
 
 const fs = require("fs");
 const path = require("path");
@@ -10,7 +10,7 @@ function readHtml(filepath) {
   return cheerio.load(html);
 }
 
-const PARCEL_SELECTOR = "#ctlBodyPane_ctl08_ctl01_lblParcelID";
+const PARCEL_SELECTOR = "#ctlBodyPane_ctl04_ctl01_dynamicSummary_rptrDynamicColumns_ctl00_pnlSingleValue";
 const BUILDING_SECTION_TITLE = "Building Information";
 
 function textTrim(s) {
@@ -78,76 +78,72 @@ function collectBuildings($) {
   return buildings;
 }
 
-function inferHVAC(buildings) {
-  let cooling_system_type = null;
-  let heating_system_type = null;
+function toInt(val) {
+  const n = Number(
+    String(val || "")
+      .replace(/[,]/g, "")
+      .trim(),
+  );
+  return Number.isFinite(n) ? n : 0;
+}
 
-  buildings.forEach((b) => {
-    const ac = (b["Air Conditioning"] || "").toUpperCase();
-    const heat = (b["Heating Type	"] || "").toUpperCase();
-    if (ac.includes("CENTRAL")) cooling_system_type = "CentralAir";
-    if (heat.includes("AIR DUCTED") || heat.includes("CENTRAL"))
-      heating_system_type = "Central";
-  });
-
-  if (cooling_system_type === "CentralAir") {
-    hvac_system_configuration = "SplitSystem";
-    hvac_equipment_component = "CondenserAndAirHandler";
-    hvac_condensing_unit_present = "Yes";
-  }
-
+function defaultLayout(space_type, idx) {
   return {
-    cooling_system_type,
-    heating_system_type
+    space_type,
+    space_index: idx,
+    flooring_material_type: null,
+    size_square_feet: null,
+    floor_level: null,
+    has_windows: null,
+    window_design_type: null,
+    window_material_type: null,
+    window_treatment_type: null,
+    is_finished: true,
+    furnished: null,
+    paint_condition: null,
+    flooring_wear: null,
+    clutter_level: null,
+    visible_damage: null,
+    countertop_material: null,
+    cabinet_style: null,
+    fixture_finish_quality: null,
+    design_style: null,
+    natural_light_quality: null,
+    decor_elements: null,
+    pool_type: null,
+    pool_equipment: null,
+    spa_type: null,
+    safety_features: null,
+    view_type: null,
+    lighting_features: null,
+    condition_issues: null,
+    is_exterior: false,
+    pool_condition: null,
+    pool_surface_type: null,
+    pool_water_quality: null,
+    bathroom_renovation_date: null,
+    kitchen_renovation_date: null,
+    flooring_installation_date: null,
   };
 }
 
-function buildUtilityRecord($, buildings) {
-  const hvac = inferHVAC(buildings);
-  const rec = {
-    cooling_system_type: hvac.cooling_system_type,
-    heating_system_type: hvac.heating_system_type,
-    public_utility_type: null,
-    sewer_type: null,
-    water_source_type: null,
-    plumbing_system_type: null,
-    plumbing_system_type_other_description: null,
-    electrical_panel_capacity: null,
-    electrical_wiring_type: null,
-    hvac_condensing_unit_present: null,
-    electrical_wiring_type_other_description: null,
-    solar_panel_present: false,
-    solar_panel_type: null,
-    solar_panel_type_other_description: null,
-    smart_home_features: null,
-    smart_home_features_other_description: null,
-    hvac_unit_condition: null,
-    solar_inverter_visible: false,
-    hvac_unit_issues: null,
-    electrical_panel_installation_date: null,
-    electrical_rewire_date: null,
-    hvac_capacity_kw: null,
-    hvac_capacity_tons: null,
-    hvac_equipment_component: null,
-    hvac_equipment_manufacturer: null,
-    hvac_equipment_model: null,
-    hvac_installation_date: null,
-    hvac_seer_rating: null,
-    hvac_system_configuration: null,
-    plumbing_system_installation_date: null,
-    sewer_connection_date: null,
-    solar_installation_date: null,
-    solar_inverter_installation_date: null,
-    solar_inverter_manufacturer: null,
-    solar_inverter_model: null,
-    water_connection_date: null,
-    water_heater_installation_date: null,
-    water_heater_manufacturer: null,
-    water_heater_model: null,
-    well_installation_date: null,
-  };
-
-  return rec;
+function buildLayoutsFromBuildings(buildings) {
+  // Sum across all buildings
+  let totalBeds = 0;
+  let totalBaths = 0;
+  buildings.forEach((b) => {
+    totalBeds += toInt(b["Bedrooms"]);
+    totalBaths += toInt(b["Bathrooms"]);
+  });
+  const layouts = [];
+  let idx = 1;
+  for (let i = 0; i < totalBeds; i++) {
+    layouts.push(defaultLayout("Bedroom", idx++));
+  }
+  for (let i = 0; i < totalBaths; i++) {
+    layouts.push(defaultLayout("Full Bathroom", idx++));
+  }
+  return layouts;
 }
 
 function main() {
@@ -156,13 +152,13 @@ function main() {
   const parcelId = getParcelId($);
   if (!parcelId) throw new Error("Parcel ID not found");
   const buildings = collectBuildings($);
-  const utilitiesRecord = buildUtilityRecord($, buildings);
+  const layouts = buildLayoutsFromBuildings(buildings);
 
   const outDir = path.resolve("owners");
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  const outPath = path.join(outDir, "utilities_data.json");
+  const outPath = path.join(outDir, "layout_data.json");
   const outObj = {};
-  outObj[`property_${parcelId}`] = utilitiesRecord;
+  outObj[`property_${parcelId}`] = { layouts };
   fs.writeFileSync(outPath, JSON.stringify(outObj, null, 2), "utf8");
   console.log(`Wrote ${outPath}`);
 }

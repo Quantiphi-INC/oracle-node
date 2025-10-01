@@ -10,7 +10,7 @@ function readHtml(filepath) {
   return cheerio.load(html);
 }
 
-const PARCEL_SELECTOR = "#ctlBodyPane_ctl08_ctl01_lblParcelID";
+const PARCEL_SELECTOR = "#ctlBodyPane_ctl04_ctl01_dynamicSummary_rptrDynamicColumns_ctl00_pnlSingleValue";
 const BUILDING_SECTION_TITLE = "Building Information";
 
 function textTrim(s) {
@@ -199,20 +199,20 @@ function buildStructureRecord($, buildings) {
   const stories = [];
 
   buildings.forEach((b) => {
-    if (b["Exterior Wall"])
-      extTokens.push(...b["Exterior Wall"].split(/[,;]/).map((s) => s.trim()));
-    if (b["Interior Wall"])
+    if (b["Exterior Walls"])
+      extTokens.push(...b["Exterior Walls"].split(";").map((s) => s.trim()));
+    if (b["Interior Walls"])
       intWallTokens.push(
-        ...b["Interior Wall"].split(/[,;]/).map((s) => s.trim()),
+        ...b["Interior Walls"].split(";").map((s) => s.trim()),
       );
-    if (b["Interior Flooring"])
-      floorTokens.push(...b["Interior Flooring"].split(/[,;]/).map((s) => s.trim()));
-    if (b["Roof Cover"]) roofTokens.push(...b["Roof Cover"].split(/[,;]/).map((s) => s.trim()),);
-    // if (b["Frame Type"]) frameTokens.push(b["Frame Type"]);
-    // if (b["Stories"]) {
-    //   const st = parseNumber(b["Stories"]);
-    //   if (st != null) stories.push(st);
-    // }
+    if (b["Floor Cover"])
+      floorTokens.push(...b["Floor Cover"].split(";").map((s) => s.trim()));
+    if (b["Roof Cover"]) roofTokens.push(b["Roof Cover"]);
+    if (b["Frame Type"]) frameTokens.push(b["Frame Type"]);
+    if (b["Stories"]) {
+      const st = parseNumber(b["Stories"]);
+      if (st != null) stories.push(st);
+    }
   });
 
   // Exterior materials
@@ -248,17 +248,17 @@ function buildStructureRecord($, buildings) {
   }
 
   // Framing
-  // if (frameTokens.join(" ").toUpperCase().includes("WOOD")) {
-    // rec.primary_framing_material = "Wood Frame";
+  if (frameTokens.join(" ").toUpperCase().includes("WOOD")) {
+    rec.primary_framing_material = "Wood Frame";
     // rec.interior_wall_structure_material = "Wood Frame";
     // rec.interior_wall_structure_material_primary = "Wood Frame";
-  // }
+  }
 
   // Stories
-  // if (stories.length) {
+  if (stories.length) {
     // Use max stories across buildings
-    // rec.number_of_stories = Math.max(...stories);
-  // }
+    rec.number_of_stories = Math.max(...stories);
+  }
 
   // Subfloor unknown; if any heated area present and FL likely slab, but leave null to avoid assumption
   // rec.subfloor_material = null;

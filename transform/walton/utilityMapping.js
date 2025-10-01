@@ -10,7 +10,7 @@ function readHtml(filepath) {
   return cheerio.load(html);
 }
 
-const PARCEL_SELECTOR = "#ctlBodyPane_ctl08_ctl01_lblParcelID";
+const PARCEL_SELECTOR = "#ctlBodyPane_ctl04_ctl01_dynamicSummary_rptrDynamicColumns_ctl00_pnlSingleValue";
 const BUILDING_SECTION_TITLE = "Building Information";
 
 function textTrim(s) {
@@ -84,7 +84,7 @@ function inferHVAC(buildings) {
 
   buildings.forEach((b) => {
     const ac = (b["Air Conditioning"] || "").toUpperCase();
-    const heat = (b["Heating Type	"] || "").toUpperCase();
+    const heat = (b["Heat"] || "").toUpperCase();
     if (ac.includes("CENTRAL")) cooling_system_type = "CentralAir";
     if (heat.includes("AIR DUCTED") || heat.includes("CENTRAL"))
       heating_system_type = "Central";
