@@ -314,6 +314,20 @@ Resources:
         - Key: Environment
           Value: !Ref EnvironmentName
 
+  WorkflowSqsQueueAlternative:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${WorkflowQueueName}-alternative"
+      VisibilityTimeout: 331
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt WorkflowDeadLetterQueue.Arn
+        maxReceiveCount: 3
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
   TransactionsSqsQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -440,6 +454,14 @@ Resources:
           Type: SQS
           Properties:
             Queue: !GetAtt WorkflowSqsQueue.Arn
+            BatchSize: 1
+            MaximumBatchingWindowInSeconds: 0
+            ScalingConfig:
+              MaximumConcurrency: !Ref WorkflowStarterReservedConcurrency
+        SqsEventAlternative:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt WorkflowSqsQueueAlternative.Arn
             BatchSize: 1
             MaximumBatchingWindowInSeconds: 0
             ScalingConfig:
@@ -609,6 +631,7 @@ Resources:
                 Resource:
                   - !GetAtt MwaaSqsQueue.Arn
                   - !GetAtt WorkflowSqsQueue.Arn
+                  - !GetAtt WorkflowSqsQueueAlternative.Arn
               - Effect: Allow
                 Action:
                   - states:StartExecution
@@ -969,6 +992,12 @@ Outputs:
   WorkflowQueueArn:
     Description: ARN of the workflow SQS queue
     Value: !GetAtt WorkflowSqsQueue.Arn
+  WorkflowQueueAlternativeUrl:
+    Description: URL of the workflow SQS queue (Step Functions trigger)
+    Value: !Ref WorkflowSqsQueueAlternative
+  WorkflowQueueAlternativeArn:
+    Description: ARN of the workflow SQS queue
+    Value: !GetAtt WorkflowSqsQueueAlternative.Arn
   ElephantExpressStateMachineArn:
     Description: ARN of the Elephant Express state machine
     Value: !Ref ElephantExpressStateMachine
