@@ -451,100 +451,123 @@ export const handler = async (event) => {
         `🔍 PERFORMANCE: Local=2s, Lambda=${(prepareDuration / 1000).toFixed(1)}s - ${prepareDuration > 3000 ? "⚠️ SLOW" : "✅ OK"}`,
       );
     } catch (prepareError) {
-      prepareDuration = Date.now() - prepareStart;
-
-      // Gather file system context
-      let inputFileInfo = null;
-      let outputFileInfo = null;
-
       try {
-        const inputStats = await fs.stat(inputZip);
-        inputFileInfo = {
-          exists: true,
-          size: inputStats.size,
-          path: inputZip,
-        };
-      } catch (statsError) {
-        inputFileInfo = {
-          exists: false,
-          error:
-            statsError instanceof Error
-              ? statsError.message
-              : String(statsError),
-          path: inputZip,
-        };
+        console.log("Retrying prepare without continue button");
+        if (prepareOptions && prepareOptions.browserFlowParameters) {
+          let preparebrowserFlowParameters = JSON.parse(prepareOptions.browserFlowParameters);
+          delete preparebrowserFlowParameters.continue_button_selector;
+          delete preparebrowserFlowParameters.continue2_button_selector;
+          prepareOptions.browserFlowParameters = JSON.stringify(preparebrowserFlowParameters);
+        }
+        console.log(
+          "Calling prepare() again with these options:",
+          JSON.stringify(prepareOptions, null, 2),
+        );
+        await prepare(inputZip, outputZip, prepareOptions);
+        prepareDuration = Date.now() - prepareStart;
+        console.log(
+          `✅ Prepare function completed: ${prepareDuration}ms (${(prepareDuration / 1000).toFixed(2)}s)`,
+        );
+        console.log(
+          `🔍 PERFORMANCE: Local=2s, Lambda=${(prepareDuration / 1000).toFixed(1)}s - ${prepareDuration > 3000 ? "⚠️ SLOW" : "✅ OK"}`,
+        );
       }
+      catch (prepareError) {
+        prepareDuration = Date.now() - prepareStart;
 
-      try {
-        const outputStats = await fs.stat(outputZip);
-        outputFileInfo = {
-          exists: true,
-          size: outputStats.size,
-          partiallyCreated: true,
-          path: outputZip,
+        // Gather file system context
+        let inputFileInfo = null;
+        let outputFileInfo = null;
+
+        try {
+          const inputStats = await fs.stat(inputZip);
+          inputFileInfo = {
+            exists: true,
+            size: inputStats.size,
+            path: inputZip,
+          };
+        } catch (statsError) {
+          inputFileInfo = {
+            exists: false,
+            error:
+              statsError instanceof Error
+                ? statsError.message
+                : String(statsError),
+            path: inputZip,
+          };
+        }
+
+        try {
+          const outputStats = await fs.stat(outputZip);
+          outputFileInfo = {
+            exists: true,
+            size: outputStats.size,
+            partiallyCreated: true,
+            path: outputZip,
+          };
+        } catch (outputError) {
+          outputFileInfo = {
+            exists: false,
+            partiallyCreated: false,
+            path: outputZip,
+          };
+        }
+
+        // Structured error log
+        const prepareErrorLog = {
+          timestamp: new Date().toISOString(),
+          level: "ERROR",
+          type: "PREPARE_FUNCTION_ERROR",
+          message: "Prepare function execution failed",
+          error: {
+            name:
+              prepareError instanceof Error
+                ? prepareError.name
+                : String(prepareError),
+            message:
+              prepareError instanceof Error
+                ? prepareError.message
+                : String(prepareError),
+            stack:
+              prepareError instanceof Error
+                ? prepareError.stack
+                : String(prepareError),
+          },
+          execution: {
+            duration: prepareDuration,
+            durationSeconds: (prepareDuration / 1000).toFixed(2),
+            phase: "prepare",
+          },
+          context: {
+            inputS3Uri: event.input_s3_uri,
+            inputFile: inputFileInfo,
+            outputFile: outputFileInfo,
+            options: prepareOptions,
+          },
+          lambda: {
+            function: process.env.AWS_LAMBDA_FUNCTION_NAME,
+            version: process.env.AWS_LAMBDA_FUNCTION_VERSION,
+            requestId: process.env.AWS_REQUEST_ID,
+            region: process.env.AWS_REGION,
+            memorySize: process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE,
+          },
         };
-      } catch (outputError) {
-        outputFileInfo = {
-          exists: false,
-          partiallyCreated: false,
-          path: outputZip,
-        };
+
+        console.error("❌ PREPARE FUNCTION FAILED");
+        console.error(JSON.stringify(prepareErrorLog, null, 2));
+
+        // Re-throw with enhanced context
+        /** @type {EnhancedError} */
+        const enhancedError = new Error(
+          `Prepare function failed: ${prepareError instanceof Error ? prepareError.message : String(prepareError)}`,
+        );
+        enhancedError.originalError =
+          prepareError instanceof Error ? prepareError : undefined;
+        enhancedError.type = "PREPARE_FUNCTION_ERROR";
+        enhancedError.context = prepareErrorLog.context;
+        enhancedError.execution = prepareErrorLog.execution;
+        throw enhancedError;
       }
-
-      // Structured error log
-      const prepareErrorLog = {
-        timestamp: new Date().toISOString(),
-        level: "ERROR",
-        type: "PREPARE_FUNCTION_ERROR",
-        message: "Prepare function execution failed",
-        error: {
-          name:
-            prepareError instanceof Error
-              ? prepareError.name
-              : String(prepareError),
-          message:
-            prepareError instanceof Error
-              ? prepareError.message
-              : String(prepareError),
-          stack:
-            prepareError instanceof Error
-              ? prepareError.stack
-              : String(prepareError),
-        },
-        execution: {
-          duration: prepareDuration,
-          durationSeconds: (prepareDuration / 1000).toFixed(2),
-          phase: "prepare",
-        },
-        context: {
-          inputS3Uri: event.input_s3_uri,
-          inputFile: inputFileInfo,
-          outputFile: outputFileInfo,
-          options: prepareOptions,
-        },
-        lambda: {
-          function: process.env.AWS_LAMBDA_FUNCTION_NAME,
-          version: process.env.AWS_LAMBDA_FUNCTION_VERSION,
-          requestId: process.env.AWS_REQUEST_ID,
-          region: process.env.AWS_REGION,
-          memorySize: process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE,
-        },
-      };
-
-      console.error("❌ PREPARE FUNCTION FAILED");
-      console.error(JSON.stringify(prepareErrorLog, null, 2));
-
-      // Re-throw with enhanced context
-      /** @type {EnhancedError} */
-      const enhancedError = new Error(
-        `Prepare function failed: ${prepareError instanceof Error ? prepareError.message : String(prepareError)}`,
-      );
-      enhancedError.originalError =
-        prepareError instanceof Error ? prepareError : undefined;
-      enhancedError.type = "PREPARE_FUNCTION_ERROR";
-      enhancedError.context = prepareErrorLog.context;
-      enhancedError.execution = prepareErrorLog.execution;
-      throw enhancedError;
     }
 
     // Check output file size

@@ -102,12 +102,12 @@ export const handler = async (event) => {
     }
     let modifiedCsvContent;
     if (hasMineralParcel) {
-      // modifiedCsvContent = csvContent.replace(
-      //   /https:\/\/parcelview\.srcpa\.gov\//g, 
-      //   'https://parcelview.srcpa.gov/mineral'
-      // );
-      // console.log("Found parcel_id with 'M' - replaced mineral URL");
-      throw new Error("Mineral is not residential");
+      modifiedCsvContent = csvContent.replace(
+        /https:\/\/parcelview\.srcpa\.gov\//g, 
+        'https://parcelview.srcpa.gov/mineral'
+      );
+      console.log("Found parcel_id with 'M' - replaced mineral URL");
+      // throw new Error("Mineral is not residential");
     } else {
       modifiedCsvContent = csvContent.replace(
         /https:\/\/parcelview\.srcpa\.gov\//g, 

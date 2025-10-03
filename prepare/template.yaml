@@ -203,6 +203,7 @@ Resources:
   DownloaderFunction:
     Type: AWS::Serverless::Function
     Properties:
+      Timeout: 600
       EphemeralStorage:
         Size: 1024
       MemorySize: 768
@@ -268,6 +269,16 @@ Resources:
   #####################################################################################################################
 
   WorkflowDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 331
+      SqsManagedSseEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  WorkflowDeadPrepareLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 1209600
@@ -456,6 +467,7 @@ Resources:
         WorkflowSqsQueueUrl: !Ref WorkflowSqsQueue
         WorkflowDeadLetterQueueUrl: !Ref WorkflowDeadLetterQueue
         TransactionsSqsQueueUrl: !Ref TransactionsSqsQueue
+        WorkflowDeadPrepareLetterQueueUrl: !Ref WorkflowDeadPrepareLetterQueue
       Role: !GetAtt ElephantExpressStateMachineRole.Arn
       Logging:
         Destinations:
@@ -502,6 +514,7 @@ Resources:
                   - !GetAtt WorkflowSqsQueue.Arn
                   - !GetAtt WorkflowDeadLetterQueue.Arn
                   - !GetAtt TransactionsSqsQueue.Arn
+                  - !GetAtt WorkflowDeadPrepareLetterQueue.Arn
               - Effect: Allow
                 Action:
                   - logs:CreateLogDelivery
