@@ -55,7 +55,7 @@
     "wait_for_results": {
       "type": "wait_for_selector",
       "input": {
-        "selector": "#ctlBodyPane_ctl00_mSection",
+        "selector": "#ctlBodyPane_ctl01_ctl01_dynamicSummary_rptrDynamicColumns_ctl00_pnlSingleValue",
         "timeout": 60000,
         "visible": true
       },
