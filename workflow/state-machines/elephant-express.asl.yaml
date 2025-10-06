@@ -104,6 +104,8 @@ States:
   #   ResultPath: null
   #   End: true
 
+  # RequeueOnSuccess removed to prevent requeue on successful completion
+
   RequeueOnFailure:
     Type: Task
     Resource: arn:aws:states:::sqs:sendMessage
