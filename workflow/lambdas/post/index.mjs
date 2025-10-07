@@ -358,6 +358,7 @@ async function runTransformAndValidation({
       duration_seconds: (transformDuration / 1000).toFixed(2),
       includes_fact_sheet_generation: true,
       error: transformResult.error,
+      scriptFailures: transformResult.scriptFailure,
     });
     throw new Error(transformResult.error);
   }
@@ -681,11 +682,10 @@ export const handler = async (event) => {
    */
   const log = (level, msg, details = {}) => {
     const entry = { ...base, level, msg, ...details };
-    const serialized = JSON.stringify(entry);
     if (level === "error") {
-      console.error(serialized);
+      console.error(entry);
     } else {
-      console.log(serialized);
+      console.log(entry);
     }
   };
 
