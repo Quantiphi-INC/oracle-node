@@ -1,4 +1,13 @@
 {
-  "brevard": "brevard.zip",
-  "lake": "lake.zip"
+  "bay": "bay.zip",
+  "gulf": "gulf.zip",
+  "hardee": "hardee.zip",
+  "hendry": "hendry.zip",
+  "jefferson": "jefferson.zip",
+  "liberty": "liberty.zip",
+  "saint johns": "saint johns.zip",
+  "santa rosa": "santa rosa.zip",
+  "suwannee": "suwannee.zip",
+  "walton": "walton.zip",
+  "washington": "washington.zip"
 }
