@@ -13,6 +13,7 @@ import path from "path";
 import { prepare } from "@elephant-xyz/cli/lib";
 import { networkInterfaces } from "os";
 import AdmZip from "adm-zip";
+import * as cheerio from 'cheerio';
 
 const RE_S3PATH = /^s3:\/\/([^/]+)\/(.*)$/i;
 
@@ -789,6 +790,51 @@ export const handler = async (event) => {
           selectedProxy.proxyId,
           false,
         );
+      }
+      if (countyName === 'Leon') {
+        console.log("Leon specific processing to remove building sketch");
+        const preparedZip = new AdmZip(await fs.readFile(outputZip));
+        const tempLeonDir = await fs.mkdtemp("/tmp/leonprep-");
+        preparedZip.extractAllTo(tempLeonDir, true);
+        const filesInTempDir = await fs.readdir(tempLeonDir);
+        const htmlFiles = filesInTempDir.filter(file => file.endsWith('.html'));
+        console.log(`${htmlFiles.length} HTML File(s) found`)
+        if (htmlFiles.length > 0 && htmlFiles[0]) {
+          const imgToRemoveId = "#building-sketch";
+          const htmlFileName = htmlFiles[0];
+          console.log(`Processing html file at path ${htmlFileName}`);
+          const htmlFilePath = path.join(tempLeonDir, htmlFileName);
+          const origHtmlContent = await fs.readFile(htmlFilePath, 'utf8');
+          const $ = cheerio.load(origHtmlContent);
+          const imgToRemove = $(imgToRemoveId); // Select the image by ID
+          let updatedHtmlContent = origHtmlContent;
+          if (imgToRemove.length > 0) {
+            imgToRemove.remove(); // Remove the selected element
+            updatedHtmlContent = $.html(); // Get the modified HTML back from Cheerio
+            console.log(`Removed <img> tag with id="${imgToRemoveId}" from HTML.`);
+          } else {
+            console.warn(`No <img> tag with id="${imgToRemoveId}" was found to remove.`);
+          }
+          await fs.writeFile(htmlFilePath, updatedHtmlContent, 'utf8');
+          console.log(`Updated HTML file: ${htmlFileName}`);
+
+          // 6. Recreate the zip with the new .html file and other files
+          const newZip = new AdmZip();
+
+          // Add all files from the temporary directory back to the new zip
+          const filesToAdd = await fs.readdir(tempLeonDir, { withFileTypes: true });
+          for (const dirent of filesToAdd) {
+            const fullPath = path.join(tempLeonDir, dirent.name);
+            if (dirent.isFile()) {
+              newZip.addLocalFile(fullPath, /* zipPath */ '');
+            } else if (dirent.isDirectory()) {
+              // Recursively add directories
+              newZip.addLocalFolder(fullPath, dirent.name);
+            }
+          }
+          newZip.writeZip(outputZip);
+          console.log(`Updated Leon zip ${outputZip}`);
+        }
       }
     } catch (prepareError) {
       prepareDuration = Date.now() - prepareStart;
