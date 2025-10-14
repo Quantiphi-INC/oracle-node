@@ -128,12 +128,12 @@ Resources:
   EnvironmentBucket:
     Type: AWS::S3::Bucket
     Properties:
-      LifecycleConfiguration:
-        Rules:
-          - Id: DeleteOutputs
-            Status: Enabled
-            ExpirationInDays: 14
-            Prefix: outputs/
+      # LifecycleConfiguration:
+      #   Rules:
+      #     - Id: DeleteOutputs
+      #       Status: Enabled
+      #       ExpirationInDays: 14
+      #       Prefix: outputs/
       VersioningConfiguration:
         Status: Enabled
       PublicAccessBlockConfiguration:
@@ -531,6 +531,7 @@ Resources:
         WorkflowPostProcessorFunction: !GetAtt WorkflowPostProcessorFunction.Arn
         TransactionsSqsQueueUrl: !Ref TransactionsSqsQueue
         WorkflowDeadPrepareLetterQueueUrl: !Ref WorkflowDeadPrepareLetterQueue
+        StackName: !Ref AWS::StackName
       Role: !GetAtt ElephantExpressStateMachineRole.Arn
       Logging:
         Destinations:
@@ -576,6 +577,17 @@ Resources:
                 Resource:
                   - !GetAtt TransactionsSqsQueue.Arn
                   - !GetAtt WorkflowDeadPrepareLetterQueue.Arn
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/repair/*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:HeadObject
+                Resource:
+                  - !Sub "${EnvironmentBucket.Arn}/*"
               - Effect: Allow
                 Action:
                   - logs:CreateLogDelivery
