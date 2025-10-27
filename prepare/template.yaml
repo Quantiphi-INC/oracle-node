@@ -213,7 +213,7 @@ Resources:
       Timeout: 600
       EphemeralStorage:
         Size: 1024
-      MemorySize: 768
+      MemorySize: 2048
       CodeUri: lambdas/downloader
       Handler: index.handler
       Description: "Downloads data (granted full S3 access as requested)"
@@ -490,7 +490,7 @@ Resources:
     Properties:
       Architectures:
         - arm64
-      MemorySize: 512
+      MemorySize: 1024
       Timeout: 120
       EphemeralStorage:
         Size: 2048
