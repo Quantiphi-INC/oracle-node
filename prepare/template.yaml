@@ -304,16 +304,6 @@ Resources:
         - Key: Environment
           Value: !Ref EnvironmentName
 
-  WorkflowDeadPrepareLetterQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      MessageRetentionPeriod: 1209600
-      VisibilityTimeout: 331
-      SqsManagedSseEnabled: true
-      Tags:
-        - Key: Environment
-          Value: !Ref EnvironmentName
-
   WorkflowSqsQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -722,7 +712,6 @@ Resources:
         WorkflowPostProcessorFunction: !GetAtt WorkflowPostProcessorFunction.Arn
         WorkflowMirrorValidatorFunction: !GetAtt WorkflowMirrorValidatorFunction.Arn
         TransactionsSqsQueueUrl: !Ref TransactionsSqsQueue
-        WorkflowDeadPrepareLetterQueueUrl: !Ref WorkflowDeadPrepareLetterQueue
         StackName: !Ref AWS::StackName
       Role: !GetAtt ElephantExpressStateMachineRole.Arn
       Logging:
@@ -769,7 +758,6 @@ Resources:
                   - sqs:SendMessage
                 Resource:
                   - !GetAtt TransactionsSqsQueue.Arn
-                  - !GetAtt WorkflowDeadPrepareLetterQueue.Arn
               - Effect: Allow
                 Action:
                   - ssm:GetParameter
