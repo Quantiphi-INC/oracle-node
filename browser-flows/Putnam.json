@@ -1,0 +1,403 @@
+{
+  "starts_at": "open_page",
+  "states": {
+    "open_page": {
+      "type": "open_page",
+      "input": {
+        "url": "{{=it.url}}",
+        "timeout": 30000,
+        "wait_until": "domcontentloaded"
+      },
+      "next": "wait_for_continue_button"
+    },
+    "wait_for_continue_button": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#btnAccept",
+        "timeout": 15000,
+        "visible": true
+      },
+      "next": "click_continue_button"
+    },
+    "click_continue_button": {
+      "type": "click",
+      "input": {
+        "selector": "#btnAccept"
+      },
+      "next": "wait_for_vid_button"
+    },
+    "wait_for_vid_button": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-VID",
+        "timeout": 15000,
+        "visible": true
+      },
+      "next": "click_vid_button"
+    },
+    "click_vid_button": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-VID"
+      },
+      "next": "wait_for_search_form"
+    },
+    "wait_for_search_form": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#parcel_vid",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "enter_vid"
+    },
+    "enter_vid": {
+      "type": "type",
+      "input": {
+        "selector": "#parcel_vid",
+        "value": "{{=it.request_identifier}}",
+        "clear": true,
+        "delay": 100
+      },
+      "next": "submit_search"
+    },
+    "submit_search": {
+      "type": "click",
+      "input": {
+        "selector": "#btnSearch"
+      },
+      "next": "wait_for_Value"
+    },
+    "wait_for_Value": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Value",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Value"
+    },
+    "click_Value": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Value"
+      },
+      "next": "wait_for_ValueLoad"
+    },
+    "wait_for_ValueLoad": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-Value > div:nth-child(1) > div.card-body.details-card-body.p-2 > div > div > div > table",
+        "timeout": 5000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_Land",
+      "next_on_timeout": "wait_for_Value_2"
+    },
+    "wait_for_Value_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Value",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Value_2"
+    },
+    "click_Value_2": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Value"
+      },
+      "next": "wait_for_ValueLoad_2"
+    },
+    "wait_for_ValueLoad_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-Value > div:nth-child(1) > div.card-body.details-card-body.p-2 > div > div > div > table",
+        "timeout": 8000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_Land",
+      "next_on_timeout": "wait_for_Land"
+    },
+    "wait_for_Land": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Land",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Land"
+    },
+    "click_Land": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Land"
+      },
+      "next": "wait_for_LandLoad"
+    },
+    "wait_for_LandLoad": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-Land > div:nth-child(1) > div.card-body.details-card-body.p-2 > div > div > div > table",
+        "timeout": 5000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_Sales",
+      "next_on_timeout": "wait_for_Land_2"
+    },
+    "wait_for_Land_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Land",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Land_2"
+    },
+    "click_Land_2": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Land"
+      },
+      "next": "wait_for_LandLoad_2"
+    },
+    "wait_for_LandLoad_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-Land > div:nth-child(1) > div.card-body.details-card-body.p-2 > div > div > div > table",
+        "timeout": 8000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_Sales",
+      "next_on_timeout": "wait_for_Sales"
+    },
+    "wait_for_Sales": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Sales",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Sales"
+    },
+    "click_Sales": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Sales"
+      },
+      "next": "wait_for_SalesLoad"
+    },
+    "wait_for_SalesLoad": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-Sales > div > div.card-body.details-card-body.p-2 > div > div > div > table",
+        "timeout": 5000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_Improvements",
+      "next_on_timeout": "wait_for_Sales_2"
+    },
+    "wait_for_Sales_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Sales",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Sales_2"
+    },
+    "click_Sales_2": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Sales"
+      },
+      "next": "wait_for_SalesLoad_2"
+    },
+    "wait_for_SalesLoad_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-Sales > div > div.card-body.details-card-body.p-2 > div > div > div > table",
+        "timeout": 8000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_Improvements",
+      "next_on_timeout": "wait_for_Improvements"
+    },
+    "wait_for_Improvements": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Improvements",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Improvements"
+    },
+    "click_Improvements": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Improvements"
+      },
+      "next": "wait_for_ImprovementsLoad"
+    },
+    "wait_for_ImprovementsLoad": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#IMPROVEMENT-1",
+        "timeout": 5000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_Features",
+      "next_on_timeout": "wait_for_Improvements_2"
+    },
+    "wait_for_Improvements_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Improvements",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Improvements_2"
+    },
+    "click_Improvements_2": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Improvements"
+      },
+      "next": "wait_for_ImprovementsLoad_2"
+    },
+    "wait_for_ImprovementsLoad_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#IMPROVEMENT-1",
+        "timeout": 8000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_Features",
+      "next_on_timeout": "wait_for_Features"
+    },
+    "wait_for_Features": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Features",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Features"
+    },
+    "click_Features": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Features"
+      },
+      "next": "wait_for_FeaturesLoad"
+    },
+    "wait_for_FeaturesLoad": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-Features > div > div.card-body.details-card-body.pt-2.pb-2 > div > div > div > table",
+        "timeout": 5000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_TaxCap",
+      "next_on_timeout": "wait_for_Features_2"
+    },
+    "wait_for_Features_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-Features",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_Features_2"
+    },
+    "click_Features_2": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-Features"
+      },
+      "next": "wait_for_FeaturesLoad_2"
+    },
+    "wait_for_FeaturesLoad_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-Features > div > div.card-body.details-card-body.pt-2.pb-2 > div > div > div > table",
+        "timeout": 8000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "wait_for_TaxCap",
+      "next_on_timeout": "wait_for_TaxCap"
+    },
+    "wait_for_TaxCap": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-TaxCap",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_TaxCap"
+    },
+    "click_TaxCap": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-TaxCap"
+      },
+      "next": "wait_for_TaxCapLoad"
+    },
+    "wait_for_TaxCapLoad": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-TaxCap > div:nth-child(1) > div.card-body.details-card-body.pt-2.pb-2 > div > div:nth-child(1) > div > table",
+        "timeout": 5000,
+        "visible": true
+      },
+      "continue_on_timeout": true,
+      "next": "ending_state",
+      "next_on_timeout": "wait_for_TaxCap_2"
+    },
+    "wait_for_TaxCap_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#tab-TaxCap",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "click_TaxCap_2"
+    },
+    "click_TaxCap_2": {
+      "type": "click",
+      "input": {
+        "selector": "#tab-TaxCap"
+      },
+      "next": "wait_for_TaxCapLoad_2"
+    },
+    "wait_for_TaxCapLoad_2": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-TaxCap > div:nth-child(1) > div.card-body.details-card-body.pt-2.pb-2 > div > div:nth-child(1) > div > table",
+        "timeout": 8000,
+        "visible": true
+      },
+      "end": true
+    },
+    "ending_state": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#details-TaxCap > div:nth-child(1) > div.card-body.details-card-body.pt-2.pb-2 > div > div:nth-child(1) > div > table",
+        "timeout": 1000,
+        "visible": true
+      },
+      "end": true
+    }
+  }
+}

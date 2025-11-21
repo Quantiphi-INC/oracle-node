@@ -45,6 +45,13 @@
         "method": "GET",
         "url": "https://www.manateepao.gov/wp-content/themes/frontier-child/models/pao-model-features.php?parid={{=it.request_identifier}}"
       }
+    },
+    {
+      "key": "Permits",
+      "request": {
+        "method": "GET",
+        "url": "https://www.manateepao.gov/wp-content/themes/frontier-child/models/pao-model-permits.php?parid={{=it.request_identifier}}"
+      }
     }
   ]
 }

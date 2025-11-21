@@ -867,44 +867,6 @@ export const handler = async (event) => {
           console.log(`Updated Leon zip ${outputZip}`);
         }
       }
-      if (countyName === 'Osceola') {
-        console.log("Osceola specific processing to remove all images");
-        const preparedZip = new AdmZip(await fs.readFile(outputZip));
-        const tempOsceolaDir = await fs.mkdtemp("/tmp/osceolaprep-");
-        preparedZip.extractAllTo(tempOsceolaDir, true);
-        const filesInTempDir = await fs.readdir(tempOsceolaDir);
-        const htmlFiles = filesInTempDir.filter(file => file.endsWith('.html'));
-        console.log(`${htmlFiles.length} HTML File(s) found`)
-        if (htmlFiles.length > 0 && htmlFiles[0]) {
-          const htmlFileName = htmlFiles[0];
-          console.log(`Processing html file at path ${htmlFileName}`);
-          const htmlFilePath = path.join(tempOsceolaDir, htmlFileName);
-          const origHtmlContent = await fs.readFile(htmlFilePath, 'utf8');
-          const $ = cheerio.load(origHtmlContent);
-          $('img').remove(); // Remove all images
-          const updatedHtmlContent = $.html(); // Get the modified HTML back from Cheerio
-          console.log(`Removed all <img> tags from HTML.`);
-          await fs.writeFile(htmlFilePath, updatedHtmlContent, 'utf8');
-          console.log(`Updated HTML file: ${htmlFileName}`);
-
-          // 6. Recreate the zip with the new .html file and other files
-          const newZip = new AdmZip();
-
-          // Add all files from the temporary directory back to the new zip
-          const filesToAdd = await fs.readdir(tempOsceolaDir, { withFileTypes: true });
-          for (const dirent of filesToAdd) {
-            const fullPath = path.join(tempOsceolaDir, dirent.name);
-            if (dirent.isFile()) {
-              newZip.addLocalFile(fullPath, /* zipPath */ '');
-            } else if (dirent.isDirectory()) {
-              // Recursively add directories
-              newZip.addLocalFolder(fullPath, dirent.name);
-            }
-          }
-          newZip.writeZip(outputZip);
-          console.log(`Updated Osceola zip ${outputZip}`);
-        }
-      }
     } catch (prepareError) {
       prepareDuration = Date.now() - prepareStart;
 

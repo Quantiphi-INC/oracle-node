@@ -1,0 +1,118 @@
+{
+  "starts_at": "open_search_page",
+  "states": {
+    "open_search_page": {
+      "type": "open_page",
+      "next": "race_form_or_button",
+      "input": {
+        "url": "{{=it.url}}",
+        "timeout": 30000,
+        "wait_until": "domcontentloaded"
+      }
+    },
+    "wait_for_search_form_ready": {
+      "type": "wait_for_selector",
+      "input": {
+        "selector": "#ctlBodyPane_ctl02_ctl01_txtParcelID",
+        "timeout": 30000,
+        "visible": true
+      },
+      "next": "enter_parcel_id"
+    },
+    "enter_parcel_id": {
+      "type": "type",
+      "input": {
+        "selector": "#ctlBodyPane_ctl02_ctl01_txtParcelID",
+        "value": "{{=it.request_identifier}}",
+        "delay": 100
+      },
+      "next": "press_enter"
+    },
+    "press_enter": {
+      "type": "keyboard_press",
+      "input": {
+        "key": "Enter"
+      },
+      "next": "wait_for_search_results"
+    },
+    "wait_for_search_results": {
+      "type": "wait_for_selector",
+      "end": true,
+      "input": {
+        "selector": "#ctlBodyPane_ctl08_ctl01_lblParcelID",
+        "timeout": 30000,
+        "visible": true
+      }
+    },
+    "race_form_or_button": {
+      "type": "wait_for_selector_race",
+      "input": {
+        "selectors": [
+          {
+            "selector": "#ctlBodyPane_ctl02_ctl01_txtParcelID",
+            "label": "search_form",
+            "timeout": 30000
+          },
+          {
+            "selector": ".btn.btn-primary.button-1",
+            "label": "continue_button",
+            "timeout": 30000
+          }
+        ],
+        "visible": true
+      },
+      "next_map": {
+        "search_form": "wait_for_search_form_ready",
+        "continue_button": "click_continue_button"
+      },
+      "validate_winner": {
+        "search_form": {
+          "check_selector": ".btn.btn-primary.button-1",
+          "if_exists_goto": "click_continue_button"
+        }
+      }
+    },
+    "click_continue_button": {
+      "type": "click",
+      "input": {
+        "selector": ".btn.btn-primary.button-1"
+      },
+      "next": "race_form_or_button2"
+    },
+    "race_form_or_button2": {
+      "type": "wait_for_selector_race",
+      "input": {
+        "selectors": [
+          {
+            "selector": "#ctlBodyPane_ctl02_ctl01_txtParcelID",
+            "label": "search_form",
+            "timeout": 30000
+          },
+          {
+            "selector": "#appBody > div.modal.in > div > div > div.modal-focus-target > div.modal-footer > a",
+            "label": "continue_button2",
+            "timeout": 30000
+          }
+        ],
+        "visible": true
+      },
+      "next_map": {
+        "search_form": "wait_for_search_form_ready",
+        "continue_button2": "click_continue_button2"
+      },
+      "validate_winner": {
+        "search_form": {
+          "check_selector": "#appBody > div.modal.in > div > div > div.modal-focus-target > div.modal-footer > a",
+          "if_exists_goto": "click_continue_button2"
+        }
+      }
+    },
+    "click_continue_button2": {
+      "type": "click",
+      "input": {
+        "selector": "#appBody > div.modal.in > div > div > div.modal-focus-target > div.modal-footer > a"
+      },
+      "next": "wait_for_search_form_ready"
+    }
+  }
+}

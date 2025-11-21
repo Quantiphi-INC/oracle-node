@@ -1,0 +1,14 @@
+{
+  "starts_at": "open_page",
+  "states": {
+    "open_page": {
+      "type": "open_page",
+      "input": {
+        "url": "{{=it.url}}",
+        "timeout": 180000,
+        "wait_until": "networkidle0"
+      },
+      "end": true
+    }
+  }
+}

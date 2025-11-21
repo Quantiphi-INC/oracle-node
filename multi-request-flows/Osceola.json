@@ -1,0 +1,68 @@
+{
+  "requests": [
+    {
+      "key": "ParcelInformation",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/ParcelMarket?$format=json&$filter=contains(strap,%27{{=it.request_identifier}}%27)&$count=true"
+      }
+    },
+    {
+      "key": "ParcelFlags",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/parcel_flg?$select=flag_dscr,val&$filter=(strap%20eq%20%27{{=it.request_identifier}}%20%20%20%20%20%20%20%27%20and%20(flag_dscr%20eq%20%27TOTAL%20APARTMENT%20UNITS%27%20or%20flag_dscr%20eq%20%27APT%20NAME%27))"
+      }
+    },
+    {
+      "key": "Building",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/Bld?$filter=strap%20eq%20%27{{=it.request_identifier}}%20%20%20%20%20%20%20%27"
+      }
+    },
+    {
+      "key": "BuildingSubAreas",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/BldSubAreas?$filter=strap%20eq%20%27{{=it.request_identifier}}%20%20%20%20%20%20%20%27"
+      }
+    },
+    {
+      "key": "ExtraFeatures",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/xfob?$filter=strap%20eq%20%27{{=it.request_identifier}}%20%20%20%20%20%20%20%27"
+      }
+    },
+    {
+      "key": "SalesHistory",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/sales?$filter=strap%20eq%20%27{{=it.request_identifier}}%20%20%20%20%20%20%20%27&$orderby=dos%20desc"
+      }
+    },
+    {
+      "key": "Land",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/Lnd_c?$filter=strap%20eq%20%27{{=it.request_identifier}}%20%20%20%20%20%20%20%27"
+      }
+    },
+    {
+      "key": "ValuesAndTax",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/PropertyValues?$filter=strap%20eq%20%27{{=it.request_identifier}}%20%20%20%20%20%20%20%27&$orderby=tax_yr%20desc%20"
+      }
+    },
+    {
+      "key": "StructureElements",
+      "request": {
+        "method": "GET",
+        "url": "https://search.property-appraiser.org/api/v1/struct_el?$format=json&$select=cd_dscr,tp_dscr,bld_num&$filter=strap%20eq%20%27{{=it.request_identifier}}%27%20%20and%20(tp_dscr%20eq%20%27ROOF%20STRUCTURE%27%20%20or%20tp_dscr%20eq%20%27EXTERIOR%20WALL%27)"
+      }
+    }
+  ]
+}
+
