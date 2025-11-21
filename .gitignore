@@ -376,9 +376,7 @@ set_multi_counties_envs.sh
 set_multi_county_envs.sh
 set_washington_envs.sh
 unset_envs.sh
-transform/**
 workflow/lambdas/post/transforms/**
-transform/**
 
 copy_files_to_s3.py
 purge_dynamodb_table.py
