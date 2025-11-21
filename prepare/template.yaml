@@ -207,11 +207,10 @@ Resources:
   DownloaderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Timeout: 600
       Runtime: nodejs22.x
       EphemeralStorage:
         Size: 1024
-      MemorySize: 2048
+      MemorySize: 768
       CodeUri: lambdas/downloader
       Handler: index.handler
       Description: "Downloads data (granted full S3 access as requested)"
